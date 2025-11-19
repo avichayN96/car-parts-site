@@ -407,11 +407,25 @@ service cloud.firestore {
             }
 
             // Initialize app
-            if (currentView === 'admin') {
-                listenToRequests();
-            } else {
-                loadRequests();
+            async function initializeApp() {
+                try {
+                    if (currentView === 'admin') {
+                        isLoading = false;
+                        render();
+                        listenToRequests();
+                    } else {
+                        isLoading = false;
+                        render();
+                        await loadRequests();
+                    }
+                } catch (error) {
+                    console.error('Initialization error:', error);
+                    isLoading = false;
+                    render();
+                }
             }
+
+            initializeApp();
 
             // Render functions
             function render() {
@@ -627,23 +641,125 @@ service cloud.firestore {
             }
 
             function renderAdminView() {
+                if (selectedRequest) {
+                    return renderSingleRequest();
+                }
+                
+                return `
+                    <div class="min-h-screen p-4 bg-gray-50">
+                        <div class="max-w-7xl mx-auto">
+                            <div class="bg-white rounded-2xl shadow-lg p-8 mb-6 fade-in">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h1 class="text-4xl font-bold text-blue-900 mb-2">פאנל ניהול</h1>
+                                        <p class="text-gray-600 text-lg">שלום עופר צוריאל 👋</p>
+                                        <p class="text-sm text-green-600 font-semibold mt-2 flex items-center gap-2">
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                            </svg>
+                                            מחובר ל-Firebase ✓
+                                        </p>
+                                    </div>
+                                    <div class="text-left space-y-2">
+                                        <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg font-bold">
+                                            ⏳ ממתינות: ${requests.filter(r => r.status === 'pending').length}
+                                        </div>
+                                        <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg font-bold">
+                                            ✓ נענו: ${requests.filter(r => r.status === 'answered').length}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl shadow-lg p-8 fade-in">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h2 class="text-3xl font-bold text-gray-800">בקשות לקוחות</h2>
+                                    <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold">
+                                        סה"כ: ${requests.length}
+                                    </span>
+                                </div>
+                                
+                                ${requests.length === 0 ? `
+                                    <div class="text-center py-20 text-gray-400">
+                                        <svg class="w-24 h-24 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                        </svg>
+                                        <p class="text-2xl font-semibold mb-2">אין בקשות כרגע</p>
+                                        <p class="text-lg">בקשות חדשות יופיעו כאן</p>
+                                    </div>
+                                ` : `
+                                    <div class="space-y-4">
+                                        ${requests.map((req, idx) => {
+                                            const hasNewMessages = req.conversation && req.conversation.some(msg => msg.sender === 'customer' && !msg.read);
+                                            return `
+                                            <div
+                                                onclick="viewRequest('${req.id}')"
+                                                class="border-2 border-gray-200 rounded-2xl p-6 hover:border-orange-500 hover:shadow-lg cursor-pointer transition-all ${hasNewMessages ? 'bg-blue-50 border-blue-300' : ''}"
+                                            >
+                                                <div class="flex justify-between items-start">
+                                                    <div class="flex-1">
+                                                        <div class="flex items-center gap-3 mb-2">
+                                                            <h3 class="font-bold text-2xl text-gray-800">${req.name}</h3>
+                                                            ${req.status === 'pending' ? `
+                                                                <span class="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full font-bold animate-pulse">
+                                                                    חדש
+                                                                </span>
+                                                            ` : ''}
+                                                            ${req.urgency && req.urgency !== 'רגיל' ? `
+                                                                <span class="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full font-bold">
+                                                                    ${req.urgency === 'דחוף מאוד' ? '🔴 דחוף מאוד!' : '⚡ דחוף'}
+                                                                </span>
+                                                            ` : ''}
+                                                            ${hasNewMessages ? `
+                                                                <span class="bg-blue-500 text-white text-xs px-3 py-1 rounded-full font-bold animate-pulse">
+                                                                    💬 הודעה חדשה
+                                                                </span>
+                                                            ` : ''}
+                                                        </div>
+                                                        <p class="text-gray-600">📞 ${req.phone}</p>
+                                                        <p class="text-orange-600 font-semibold">🔧 ${req.carPart}</p>
+                                                        <p class="text-sm text-gray-600">🚗 ${req.carManufacturer} ${req.carModel}</p>
+                                                        <p class="text-xs text-gray-400 mt-2">
+                                                            ${new Date(req.createdAt).toLocaleString('he-IL')}
+                                                        </p>
+                                                    </div>
+                                                    <div class="mr-6">
+                                                        <span class="inline-block px-4 py-2 rounded-xl text-sm font-bold ${
+                                                            req.status === 'answered' 
+                                                                ? 'bg-green-500 text-white' 
+                                                                : 'bg-yellow-400 text-gray-800'
+                                                        }">
+                                                            ${req.status === 'answered' ? '✓ נענתה' : '⏳ ממתינה'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `}).join('')}
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderSingleRequest() {
                 return `<div class="min-h-screen p-4 bg-gray-50">
-                    <div class="max-w-6xl mx-auto">
-                        <div class="bg-white rounded-2xl p-8 mb-6">
-                            <h1 class="text-3xl font-bold text-blue-900">פאנל ניהול - עופר</h1>
-                            <p class="text-green-600 mt-2">✓ מחובר ל-Firebase (נתונים אמיתיים)</p>
+                    <div class="max-w-4xl mx-auto">
+                        <div class="bg-white rounded-2xl p-6 mb-4">
+                            <button onclick="backToList()" class="text-blue-600 font-bold">← חזרה</button>
                         </div>
                         <div class="bg-white rounded-2xl p-8">
-                            <h2 class="text-2xl font-bold mb-4">בקשות (${requests.length})</h2>
-                            ${requests.length === 0 ? '<p class="text-center text-gray-500 py-12">אין בקשות כרגע</p>' : 
-                                requests.map(req => `
-                                    <div class="border-2 p-4 rounded-xl mb-4 cursor-pointer hover:border-orange-500" onclick="viewRequest('${req.id}')">
-                                        <h3 class="font-bold text-xl">${req.name}</h3>
-                                        <p>${req.phone} • ${req.carPart}</p>
-                                        <p class="text-sm text-gray-500">${new Date(req.createdAt).toLocaleString('he-IL')}</p>
-                                    </div>
-                                `).join('')
-                            }
+                            <h2 class="text-3xl font-bold mb-4">${selectedRequest.name}</h2>
+                            <p>📞 ${selectedRequest.phone}</p>
+                            <p>🔧 ${selectedRequest.carPart}</p>
+                            <p>🚗 ${selectedRequest.carManufacturer} ${selectedRequest.carModel}</p>
+                            ${selectedRequest.description ? `<p class="mt-4 p-4 bg-gray-50 rounded-lg">${selectedRequest.description}</p>` : ''}
+                            
+                            <div class="mt-6">
+                                <textarea id="responseText" class="w-full p-4 border-2 rounded-xl" rows="4" placeholder="כתוב תשובה..."></textarea>
+                                <button onclick="sendResponse()" class="mt-3 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">שלח תשובה</button>
+                            </div>
                         </div>
                     </div>
                 </div>`;
@@ -723,13 +839,76 @@ service cloud.firestore {
 
             function viewRequest(id) {
                 selectedRequest = requests.find(r => r.id === id);
+                
+                // Mark customer messages as read
+                if (selectedRequest && selectedRequest.conversation) {
+                    selectedRequest.conversation = selectedRequest.conversation.map(msg => ({
+                        ...msg,
+                        read: true
+                    }));
+                    
+                    // Update in Firebase
+                    db.collection('requests').doc(id).update({
+                        conversation: selectedRequest.conversation
+                    }).catch(err => console.error('Error updating:', err));
+                }
+                
+                responseText = '';
                 render();
+            }
+
+            function backToList() {
+                selectedRequest = null;
+                responseText = '';
+                render();
+            }
+
+            async function sendResponse() {
+                const textarea = document.getElementById('responseText');
+                const response = textarea ? textarea.value : responseText;
+                
+                if (!response.trim()) {
+                    alert('נא לכתוב תשובה');
+                    return;
+                }
+
+                try {
+                    if (!selectedRequest.response) {
+                        // First response
+                        await db.collection('requests').doc(selectedRequest.id).update({
+                            response: response,
+                            status: 'answered',
+                            answeredAt: new Date().toISOString()
+                        });
+                    } else {
+                        // Additional message
+                        const conversation = selectedRequest.conversation || [];
+                        conversation.push({
+                            sender: 'ofer',
+                            message: response,
+                            timestamp: new Date().toISOString()
+                        });
+                        
+                        await db.collection('requests').doc(selectedRequest.id).update({
+                            conversation: conversation
+                        });
+                    }
+
+                    responseText = '';
+                    alert('ההודעה נשלחה! 🎉');
+                    render();
+                } catch (error) {
+                    console.error('Error sending response:', error);
+                    alert('שגיאה בשליחת ההודעה');
+                }
             }
 
             // Make functions global
             window.toggleStatusCheck = toggleStatusCheck;
             window.checkStatus = checkStatus;
             window.viewRequest = viewRequest;
+            window.backToList = backToList;
+            window.sendResponse = sendResponse;
         }
     </script>
 </body>
