@@ -722,7 +722,7 @@ service cloud.firestore {
                     
                     <input type="text" id="carManufacturer" class="input-field w-full p-5 border-2 rounded-2xl text-right focus:outline-none text-lg" placeholder="יצרן הרכב *" required />
                     <input type="text" id="carModel" class="input-field w-full p-5 border-2 rounded-2xl text-right focus:outline-none text-lg" placeholder="דגם הרכב *" required />
-                    <input type="text" id="year" class="input-field w-full p-5 border-2 rounded-2xl text-right focus:outline-none text-lg" placeholder="שנת ייצור" />
+                    <input type="text" id="year" class="input-field w-full p-5 border-2 rounded-2xl text-right focus:outline-none text-lg" placeholder="שנת ייצור *" required />
                     <textarea id="description" class="input-field w-full p-5 border-2 rounded-2xl text-right focus:outline-none text-lg resize-none" rows="4" placeholder="פרטים נוספים..."></textarea>
                     
                     <select id="urgency" class="input-field w-full p-5 border-2 rounded-2xl text-right focus:outline-none bg-white text-lg font-medium" required>
@@ -1122,6 +1122,40 @@ service cloud.firestore {
                                     </div>
                                 `}
                             </div>
+
+                            <div class="bg-white rounded-2xl shadow-lg p-8 fade-in mt-6">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h2 class="text-3xl font-bold text-gray-800">⭐ ניהול חוות דעת</h2>
+                                    <span class="bg-orange-100 text-orange-800 px-4 py-2 rounded-full font-bold">
+                                        סה"כ: ${(requests.filter(r => r.rating).length)}
+                                    </span>
+                                </div>
+                                
+                                ${requests.filter(r => r.rating).length === 0 ? `
+                                    <div class="text-center py-12 text-gray-400">
+                                        <p class="text-lg">אין חוות דעת עדיין</p>
+                                    </div>
+                                ` : `
+                                    <div class="space-y-4">
+                                        ${requests.filter(r => r.rating).map(req => `
+                                            <div class="border-2 border-orange-200 rounded-xl p-4 flex justify-between items-start">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="text-lg">${'⭐'.repeat(req.rating)}</span>
+                                                        <span class="font-bold text-gray-800">${req.name}</span>
+                                                        <span class="text-sm text-gray-600">${req.phone}</span>
+                                                    </div>
+                                                    ${req.review ? `<p class="text-gray-700 mb-2 italic">"${req.review}"</p>` : ''}
+                                                    <p class="text-xs text-gray-500">🔧 ${req.carPart} | 🚗 ${req.carManufacturer} ${req.carModel}</p>
+                                                </div>
+                                                <button onclick="deleteRequestRating('${req.id}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold transition ml-4">
+                                                    🗑️ מחק
+                                                </button>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1174,7 +1208,7 @@ service cloud.firestore {
                             <!-- Initial Request -->
                             <div class="flex justify-end gap-3">
                                 <div class="bg-blue-500 text-white rounded-3xl rounded-tr-none px-5 py-3 max-w-xs">
-                                    <p class="text-sm">${selectedRequest.carPart} - ${selectedRequest.carManufacturer} ${selectedRequest.carModel}</p>
+                                    <p class="text-sm">${selectedRequest.carPart} - ${selectedRequest.carManufacturer} ${selectedRequest.carModel}${selectedRequest.year ? ' (' + selectedRequest.year + ')' : ''}</p>
                                     <p class="text-xs text-blue-100 mt-1">${new Date(selectedRequest.createdAt).toLocaleTimeString('he-IL')}</p>
                                 </div>
                             </div>
@@ -1294,7 +1328,7 @@ service cloud.firestore {
             async function handleSubmit(e) {
                 e.preventDefault();
                 
-                if (!formData.carPart || !formData.name || !formData.phone) {
+                if (!formData.carPart || !formData.name || !formData.phone || !formData.year) {
                     alert('נא למלא את כל השדות החובה');
                     return;
                 }
@@ -1676,6 +1710,37 @@ service cloud.firestore {
 
             window.submitAdminRating = submitAdminRating;
             window.showEditRating = showEditRating;
+
+            // Delete rating function
+            async function deleteRequestRating(requestId) {
+                if (!confirm('האם אתה בטוח שברצונך למחוק חוות דעת זו?')) {
+                    return;
+                }
+
+                try {
+                    await db.collection('requests').doc(requestId).update({
+                        rating: firebase.firestore.FieldValue.delete(),
+                        review: firebase.firestore.FieldValue.delete(),
+                        ratedAt: firebase.firestore.FieldValue.delete()
+                    });
+
+                    // Remove from local requests array
+                    const idx = requests.findIndex(r => r.id === requestId);
+                    if (idx !== -1) {
+                        delete requests[idx].rating;
+                        delete requests[idx].review;
+                        delete requests[idx].ratedAt;
+                    }
+
+                    alert('חוות הדעת נמחקה בהצלחה');
+                    render();
+                } catch (error) {
+                    console.error('Error deleting rating:', error);
+                    alert('שגיאה במחיקת חוות הדעת: ' + error.message);
+                }
+            }
+
+            window.deleteRequestRating = deleteRequestRating;
         }
     </script>
 </body>
