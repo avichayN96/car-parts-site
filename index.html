@@ -372,6 +372,7 @@ service cloud.firestore {
                         id: doc.id,
                         ...doc.data()
                     }));
+                    console.log('Requests loaded:', requests.length, 'rated:', requests.filter(r => r.rating).length);
                     requestsLoaded = true;
                     isLoading = false;
                     render();
@@ -607,41 +608,53 @@ service cloud.firestore {
             }
 
             function renderReviews() {
-                // Get all rated requests
-                const ratedRequests = requests.filter(r => r.rating && r.rating > 0);
+                // Get all rated requests and sort by rating (highest first)
+                const ratedRequests = requests
+                    .filter(r => r.rating && r.rating > 0)
+                    .sort((a, b) => b.rating - a.rating);
                 
                 if (ratedRequests.length === 0) {
                     return '';
                 }
 
+                const getRatingStars = (rating) => {
+                    let stars = '';
+                    for (let i = 0; i < 5; i++) {
+                        stars += i < rating ? '⭐' : '☆';
+                    }
+                    return stars;
+                };
+
                 return `
-                    <div class="mt-16 mb-8">
-                        <div class="text-center mb-8">
-                            <h2 class="text-4xl font-bold text-gray-800 mb-2">חוות דעת של לקוחות</h2>
-                            <p class="text-gray-600">מה הלקוחות שלנו חושבים עלינו</p>
+                    <div class="mt-16 mb-8 fade-in">
+                        <div class="text-center mb-12">
+                            <h2 class="text-4xl font-bold text-gray-800 mb-2">⭐ חוות דעת של לקוחות</h2>
+                            <p class="text-gray-600 text-lg">מה הלקוחות שלנו חושבים עלינו</p>
+                            <div class="mt-4">
+                                <p class="text-2xl font-bold text-orange-500">
+                                    ${(ratedRequests.reduce((sum, r) => sum + r.rating, 0) / ratedRequests.length).toFixed(1)} / 5
+                                </p>
+                                <p class="text-sm text-gray-600">${ratedRequests.length} דירוגים</p>
+                            </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            ${ratedRequests.slice(0, 3).map(req => `
-                                <div class="glass-card rounded-3xl p-8 text-right hover:shadow-xl transition-all">
-                                    <div class="flex justify-end gap-1 mb-4">
-                                        ${Array(req.rating).fill('⭐').join('')}
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            ${ratedRequests.slice(0, 3).map((req, idx) => `
+                                <div class="glass-card rounded-3xl p-8 text-right hover:shadow-2xl transition-all transform hover:scale-105 ${idx === 0 ? 'md:col-span-1 md:row-span-1 border-2 border-orange-300 shadow-lg' : ''}">
+                                    <div class="flex justify-end gap-1 mb-4 text-2xl">
+                                        ${getRatingStars(req.rating)}
                                     </div>
-                                    <p class="text-gray-700 mb-4 italic">"${req.review || 'שירות מעולה!'}"</p>
-                                    <div class="border-t pt-4">
-                                        <p class="font-bold text-gray-800">${req.name}</p>
+                                    
+                                    <p class="text-gray-700 mb-6 italic text-base leading-relaxed">"${req.review || 'שירות מעולה וממש מומלץ!'}"</p>
+                                    
+                                    <div class="border-t border-gray-200 pt-4 mt-4">
+                                        <p class="font-bold text-gray-900 text-lg">${req.name}</p>
                                         <p class="text-sm text-gray-600">📞 ${req.phone}</p>
-                                        <p class="text-xs text-gray-500 mt-1">🔧 ${req.carPart}</p>
+                                        <p class="text-xs text-gray-500 mt-2">🔧 ${req.carPart}</p>
+                                        ${req.carManufacturer ? `<p class="text-xs text-gray-500">🚗 ${req.carManufacturer} ${req.carModel}</p>` : ''}
                                     </div>
                                 </div>
                             `).join('')}
-                        </div>
-
-                        <div class="text-center mt-8">
-                            <p class="text-gray-700 font-bold">
-                                ⭐ ממוצע דירוג: ${(ratedRequests.reduce((sum, r) => sum + r.rating, 0) / ratedRequests.length).toFixed(1)}/5 
-                                <span class="text-sm text-gray-600">(${ratedRequests.length} דירוגים)</span>
-                            </p>
                         </div>
                     </div>
                 `;
@@ -781,59 +794,54 @@ service cloud.firestore {
                                         <p class="text-lg">בקשות חדשות יופיעו כאן</p>
                                     </div>
                                 ` : `
-                                    <div class="space-y-4">
-                                        ${requests.map((req, idx) => {
-                                            const hasNewMessages = req.conversation && req.conversation.some(msg => msg.sender === 'customer' && !msg.read);
-                                            return `
-                                            <div
-                                                onclick="viewRequest('${req.id}')"
-                                                class="border-2 border-gray-200 rounded-2xl p-6 hover:border-orange-500 hover:shadow-lg cursor-pointer transition-all ${hasNewMessages ? 'bg-blue-50 border-blue-300' : ''}"
-                                            >
-                                                <div class="flex justify-between items-start">
-                                                    <div class="flex-1">
-                                                        <div class="flex items-center gap-3 mb-2">
-                                                            <h3 class="font-bold text-2xl text-gray-800">${req.name}</h3>
-                                                            ${req.status === 'pending' ? `
-                                                                <span class="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full font-bold animate-pulse">
-                                                                    חדש
-                                                                </span>
-                                                            ` : ''}
-                                                            ${req.urgency && req.urgency !== 'רגיל' ? `
-                                                                <span class="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full font-bold">
-                                                                    ${req.urgency === 'דחוף מאוד' ? '🔴 דחוף מאוד!' : '⚡ דחוף'}
-                                                                </span>
-                                                            ` : ''}
-                                                            ${hasNewMessages ? `
-                                                                <span class="bg-blue-500 text-white text-xs px-3 py-1 rounded-full font-bold animate-pulse">
-                                                                    💬 הודעה חדשה
-                                                                </span>
-                                                            ` : ''}
-                                                        </div>
-                                                        <p class="text-gray-600">📞 ${req.phone}</p>
-                                                        <p class="text-orange-600 font-semibold">🔧 ${req.carPart}</p>
-                                                        <p class="text-sm text-gray-600">🚗 ${req.carManufacturer} ${req.carModel}</p>
-                                                        <p class="text-xs text-gray-400 mt-2">
-                                                            ${new Date(req.createdAt).toLocaleString('he-IL')}
-                                                        </p>
-                                                        ${req.rating ? `
-                                                            <div class="mt-3 pt-3 border-t border-gray-200">
-                                                                <p class="text-sm font-bold text-gray-700">⭐ דירוג: ${req.rating}/5</p>
-                                                                ${req.review ? `<p class="text-xs text-gray-600 mt-1">💬 "${req.review}"</p>` : ''}
-                                                            </div>
-                                                        ` : ''}
-                                                    </div>
-                                                    <div class="mr-6">
-                                                        <span class="inline-block px-4 py-2 rounded-xl text-sm font-bold ${
-                                                            req.status === 'answered' 
-                                                                ? 'bg-green-500 text-white' 
-                                                                : 'bg-yellow-400 text-gray-800'
-                                                        }">
-                                                            ${req.status === 'answered' ? '✓ נענתה' : '⏳ ממתינה'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        `}).join('')}
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-sm text-right">
+                                            <thead class="bg-blue-900 text-white sticky top-0">
+                                                <tr>
+                                                    <th class="px-4 py-3 font-bold">שם</th>
+                                                    <th class="px-4 py-3 font-bold">📞 טלפון</th>
+                                                    <th class="px-4 py-3 font-bold">🔧 חלק</th>
+                                                    <th class="px-4 py-3 font-bold">🚗 רכב</th>
+                                                    <th class="px-4 py-3 font-bold">שנה</th>
+                                                    <th class="px-4 py-3 font-bold">סטטוס</th>
+                                                    <th class="px-4 py-3 font-bold">⭐ דירוג</th>
+                                                    <th class="px-4 py-3 font-bold">📅 תאריך</th>
+                                                    <th class="px-4 py-3 font-bold">פעולה</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${requests.map((req, idx) => {
+                                                    const hasNewMessages = req.conversation && req.conversation.some(msg => msg.sender === 'customer' && !msg.read);
+                                                    return `
+                                                    <tr class="border-b hover:bg-blue-50 cursor-pointer transition-all ${hasNewMessages ? 'bg-blue-100' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}">
+                                                        <td class="px-4 py-3 font-bold text-gray-800">${req.name}</td>
+                                                        <td class="px-4 py-3 text-gray-700">${req.phone}</td>
+                                                        <td class="px-4 py-3 text-orange-600 font-semibold">${req.carPart}</td>
+                                                        <td class="px-4 py-3 text-gray-700">${req.carManufacturer} ${req.carModel}</td>
+                                                        <td class="px-4 py-3 text-gray-700">${req.year || '-'}</td>
+                                                        <td class="px-4 py-3">
+                                                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                                                req.status === 'answered' 
+                                                                    ? 'bg-green-200 text-green-800' 
+                                                                    : 'bg-yellow-200 text-yellow-800'
+                                                            }">
+                                                                ${req.status === 'answered' ? '✓ נענתה' : '⏳ ממתינה'}
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-4 py-3">
+                                                            ${req.rating ? `<span class="font-bold text-orange-500">${'⭐'.repeat(req.rating)}</span>` : '<span class="text-gray-400">-</span>'}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-gray-600 text-xs">${new Date(req.createdAt).toLocaleDateString('he-IL')}</td>
+                                                        <td class="px-4 py-3">
+                                                            <button onclick="viewRequest('${req.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg font-bold transition">
+                                                                צפה
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    `;
+                                                }).join('')}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 `}
                             </div>
@@ -878,8 +886,28 @@ service cloud.firestore {
                                 <div class="mt-3 p-3 bg-yellow-50 rounded-lg border-2 border-yellow-300">
                                     <p class="text-right font-bold text-gray-800">⭐ דירוג הלקוח: ${selectedRequest.rating}/5</p>
                                     ${selectedRequest.review ? `<p class="text-right text-sm text-gray-700 mt-2">💬 "${selectedRequest.review}"</p>` : ''}
+                                    ${isAdmin ? `<button onclick="showEditRating()" class="mt-2 text-xs text-blue-600 hover:text-blue-800 font-bold">✏️ ערוך דירוג</button>` : ''}
                                 </div>
-                            ` : ''}
+                            ` : (isAdmin ? `
+                                <div class="mt-3 p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
+                                    <p class="text-right font-bold text-gray-800 mb-2">⭐ הוסף דירוג ידנית</p>
+                                    <div class="flex justify-center gap-2 mb-3">
+                                        <button onclick="submitAdminRating(1)" class="text-2xl hover:scale-125 transition">😞</button>
+                                        <button onclick="submitAdminRating(2)" class="text-2xl hover:scale-125 transition">😕</button>
+                                        <button onclick="submitAdminRating(3)" class="text-2xl hover:scale-125 transition">😐</button>
+                                        <button onclick="submitAdminRating(4)" class="text-2xl hover:scale-125 transition">😊</button>
+                                        <button onclick="submitAdminRating(5)" class="text-2xl hover:scale-125 transition">😍</button>
+                                    </div>
+                                    <textarea 
+                                        id="adminReviewText" 
+                                        class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm text-right" 
+                                        rows="2"
+                                        placeholder="כתוב חוות דעת (לא חובה)..."
+                                    ></textarea>
+                                </div>
+                            ` : '')}
+                        </div>
+                    </div>
                         </div>
                     </div>
 
@@ -1229,6 +1257,14 @@ service cloud.firestore {
                     // Update local request
                     selectedRequest.rating = stars;
                     selectedRequest.review = review;
+                    
+                    // Also update in requests array
+                    const idx = requests.findIndex(r => r.id === selectedRequest.id);
+                    if (idx !== -1) {
+                        requests[idx].rating = stars;
+                        requests[idx].review = review;
+                    }
+                    
                     render();
                 } catch (error) {
                     console.error('Error submitting rating:', error);
@@ -1236,7 +1272,50 @@ service cloud.firestore {
                 }
             }
 
-            window.submitRating = submitRating;
+            async function submitAdminRating(stars) {
+                const reviewText = document.getElementById('adminReviewText');
+                const review = reviewText ? reviewText.value.trim() : '';
+
+                try {
+                    if (!selectedRequest || !selectedRequest.id) {
+                        alert('שגיאה: לא נבחרה בקשה');
+                        return;
+                    }
+
+                    await db.collection('requests').doc(selectedRequest.id).update({
+                        rating: stars,
+                        review: review,
+                        ratedAt: new Date().toISOString()
+                    });
+
+                    // Update local request
+                    selectedRequest.rating = stars;
+                    selectedRequest.review = review;
+                    
+                    // Also update in requests array
+                    const idx = requests.findIndex(r => r.id === selectedRequest.id);
+                    if (idx !== -1) {
+                        requests[idx].rating = stars;
+                        requests[idx].review = review;
+                    }
+                    
+                    alert('הדירוג נשמר בהצלחה! ⭐');
+                    render();
+                } catch (error) {
+                    console.error('Error submitting rating:', error);
+                    alert('שגיאה בשליחת הדירוג: ' + error.message);
+                }
+            }
+
+            function showEditRating() {
+                const newRating = prompt('הזן דירוג חדש (1-5):', selectedRequest.rating);
+                if (newRating && newRating >= 1 && newRating <= 5) {
+                    submitAdminRating(parseInt(newRating));
+                }
+            }
+
+            window.submitAdminRating = submitAdminRating;
+            window.showEditRating = showEditRating;
         }
     </script>
 </body>
