@@ -643,6 +643,7 @@ service cloud.firestore {
                             id="statusPhone" 
                             class="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition text-right" 
                             placeholder="הזן מספר טלפון או שם..." 
+                            value="${statusPhone}"
                         />
                         <button onclick="checkStatus()" class="btn-primary w-full py-3 rounded-xl text-white font-bold">🔍 חפש בקשה</button>
                     </div>
@@ -651,10 +652,10 @@ service cloud.firestore {
                         <div class="mt-6 p-6 bg-green-50 border-2 border-green-300 rounded-xl">
                             <h3 class="text-xl font-bold text-green-800 mb-4">✓ נמצאה בקשה!</h3>
                             <div class="space-y-3 text-right">
-                                <p><span class="font-bold">👤 שם:</span> ${statusResult.name}</p>
-                                <p><span class="font-bold">📞 טלפון:</span> ${statusResult.phone}</p>
-                                <p><span class="font-bold">🔧 חלק:</span> ${statusResult.carPart}</p>
-                                <p><span class="font-bold">🚗 רכב:</span> ${statusResult.carManufacturer} ${statusResult.carModel}</p>
+                                <p><span class="font-bold">👤 שם:</span> ${statusResult.name || 'לא מוגדר'}</p>
+                                <p><span class="font-bold">📞 טלפון:</span> ${statusResult.phone || 'לא מוגדר'}</p>
+                                <p><span class="font-bold">🔧 חלק:</span> ${statusResult.carPart || 'לא מוגדר'}</p>
+                                <p><span class="font-bold">🚗 רכב:</span> ${statusResult.carManufacturer || ''} ${statusResult.carModel || 'לא מוגדר'}</p>
                                 <p><span class="font-bold">📅 תאריך:</span> ${new Date(statusResult.createdAt).toLocaleString('he-IL')}</p>
                                 <p>
                                     <span class="font-bold">סטטוס:</span> 
@@ -662,7 +663,7 @@ service cloud.firestore {
                                         ${statusResult.status === 'answered' ? '✓ נענתה' : '⏳ ממתינה'}
                                     </span>
                                 </p>
-                                ${statusResult.response ? `<p class="mt-3 p-3 bg-white rounded-lg"><span class="font-bold">תשובה:</span> ${statusResult.response}</p>` : ''}
+                                ${statusResult.response ? `<p class="mt-3 p-3 bg-white rounded-lg"><span class="font-bold">💬 תשובה:</span> ${statusResult.response}</p>` : ''}
                             </div>
                         </div>
                     ` : ''}
@@ -880,23 +881,39 @@ service cloud.firestore {
                 render();
             }
 
-            function checkStatus() {
+            async function checkStatus() {
                 if (!statusPhone.trim()) {
                     alert('נא להזין מספר טלפון או שם');
                     statusResult = null;
                     return;
                 }
-                
-                // חיפוש לפי טלפון או שם
-                statusResult = requests.find(r => 
-                    r.phone.includes(statusPhone.trim()) || 
-                    r.name.includes(statusPhone.trim())
-                );
-                
-                if (!statusResult) {
-                    alert('לא נמצאה בקשה עם המידע הזה');
+
+                try {
+                    // Load all requests from Firebase
+                    const querySnapshot = await db.collection('requests').get();
+                    const allRequests = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        allRequests.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+
+                    // חיפוש לפי טלפון או שם
+                    statusResult = allRequests.find(r => 
+                        (r.phone && r.phone.includes(statusPhone.trim())) || 
+                        (r.name && r.name.includes(statusPhone.trim()))
+                    );
+                    
+                    if (!statusResult) {
+                        alert('לא נמצאה בקשה עם המידע הזה');
+                    }
+                    render();
+                } catch (error) {
+                    console.error('Error checking status:', error);
+                    alert('שגיאה בחיפוש: ' + error.message);
                 }
-                render();
             }
 
             async function deleteRequest(id) {
