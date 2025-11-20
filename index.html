@@ -182,9 +182,9 @@
         select {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ff6b35'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: left 1rem center;
+            background-position: right 1rem center;
             background-size: 1.5em 1.5em;
-            padding-left: 3rem;
+            padding-right: 3rem;
         }
         
         .chat-bubble {
@@ -1082,9 +1082,10 @@ service cloud.firestore {
                     });
 
                     // חיפוש לפי טלפון או שם
+                    const searchTerm = statusPhone.trim();
                     statusResult = allRequests.find(r => 
-                        (r.phone && r.phone.includes(statusPhone.trim())) || 
-                        (r.name && r.name.includes(statusPhone.trim()))
+                        (r.phone && r.phone.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, ''))) || 
+                        (r.name && r.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     );
                     
                     if (!statusResult) {
@@ -1104,6 +1105,10 @@ service cloud.firestore {
 
                 try {
                     await db.collection('requests').doc(id).delete();
+                    
+                    // הסר מהמערך המקומי
+                    requests = requests.filter(r => r.id !== id);
+                    
                     alert('הבקשה נמחקה בהצלחה ✓');
                     backToList();
                 } catch (error) {
@@ -1299,8 +1304,13 @@ service cloud.firestore {
 
             function showEditRating() {
                 const newRating = prompt('הזן דירוג חדש (1-5):', selectedRequest.rating);
-                if (newRating && newRating >= 1 && newRating <= 5) {
-                    submitAdminRating(parseInt(newRating));
+                if (newRating) {
+                    const rating = parseInt(newRating);
+                    if (rating >= 1 && rating <= 5) {
+                        submitAdminRating(rating);
+                    } else {
+                        alert('הדירוג חייב להיות בין 1 ל-5');
+                    }
                 }
             }
 
