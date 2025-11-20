@@ -886,28 +886,8 @@ service cloud.firestore {
                                 <div class="mt-3 p-3 bg-yellow-50 rounded-lg border-2 border-yellow-300">
                                     <p class="text-right font-bold text-gray-800">⭐ דירוג הלקוח: ${selectedRequest.rating}/5</p>
                                     ${selectedRequest.review ? `<p class="text-right text-sm text-gray-700 mt-2">💬 "${selectedRequest.review}"</p>` : ''}
-                                    ${isAdmin ? `<button onclick="showEditRating()" class="mt-2 text-xs text-blue-600 hover:text-blue-800 font-bold">✏️ ערוך דירוג</button>` : ''}
                                 </div>
-                            ` : (isAdmin ? `
-                                <div class="mt-3 p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
-                                    <p class="text-right font-bold text-gray-800 mb-2">⭐ הוסף דירוג ידנית</p>
-                                    <div class="flex justify-center gap-2 mb-3">
-                                        <button onclick="submitAdminRating(1)" class="text-2xl hover:scale-125 transition">😞</button>
-                                        <button onclick="submitAdminRating(2)" class="text-2xl hover:scale-125 transition">😕</button>
-                                        <button onclick="submitAdminRating(3)" class="text-2xl hover:scale-125 transition">😐</button>
-                                        <button onclick="submitAdminRating(4)" class="text-2xl hover:scale-125 transition">😊</button>
-                                        <button onclick="submitAdminRating(5)" class="text-2xl hover:scale-125 transition">😍</button>
-                                    </div>
-                                    <textarea 
-                                        id="adminReviewText" 
-                                        class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm text-right" 
-                                        rows="2"
-                                        placeholder="כתוב חוות דעת (לא חובה)..."
-                                    ></textarea>
-                                </div>
-                            ` : '')}
-                        </div>
-                    </div>
+                            ` : ''}
                         </div>
                     </div>
 
@@ -990,8 +970,8 @@ service cloud.firestore {
                                     📤 שלח
                                 </button>
                             </div>
-                            <p class="text-xs text-gray-500 mt-2 text-right">
-                                ${isAdmin ? 'אתה עופר - הודעותיך בכחול' : 'אתה הלקוח - הודעותיך בכחול'}
+                            <p class="text-xs text-gray-500 mt-2 text-center">
+                                ${isAdmin ? '📍 אתה עופר - הודעותיך בעמום' : '📍 אתה הלקוח - הודעותיך בכחול'}
                             </p>
                         </div>
                     </div>
@@ -1201,15 +1181,25 @@ service cloud.firestore {
                         read: sender === 'ofer' // Mark admin messages as read automatically
                     });
 
+                    // Prepare update object
+                    const updateObj = {
+                        conversation: conversation
+                    };
+
+                    // If ofer's first response - mark as answered
+                    if (sender === 'ofer' && !selectedRequest.response) {
+                        updateObj.response = message;
+                        updateObj.status = 'answered';
+                        updateObj.answeredAt = new Date().toISOString();
+                    }
+                    
+                    // If customer sends a new message after answered - change back to pending
+                    if (sender === 'customer' && selectedRequest.status === 'answered') {
+                        updateObj.status = 'pending';
+                    }
+
                     // Update Firebase
-                    await db.collection('requests').doc(selectedRequest.id).update({
-                        conversation: conversation,
-                        ...(sender === 'ofer' && !selectedRequest.response ? {
-                            response: message,
-                            status: 'answered',
-                            answeredAt: new Date().toISOString()
-                        } : {})
-                    });
+                    await db.collection('requests').doc(selectedRequest.id).update(updateObj);
 
                     // Clear input
                     if (textarea) textarea.value = '';
