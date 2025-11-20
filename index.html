@@ -589,7 +589,7 @@ service cloud.firestore {
                             ` : ''}
 
                             <div class="w-full mb-8">
-                                <img src="header.png" alt="שרותי רכב פנסים ומראות" class="w-full h-auto object-contain">
+                                <img src="${window.location.pathname.includes('/car-parts-site') ? '/car-parts-site/' : '/'}header.png" alt="שרותי רכב פנסים ומראות" class="w-full h-auto object-contain">
                             </div>
 
                             <div class="text-center text-white mb-8 py-12 fade-in">
@@ -728,12 +728,17 @@ service cloud.firestore {
             }
 
             function renderGallery() {
+                // Get the base URL for GitHub Pages
+                const baseUrl = window.location.pathname.includes('/car-parts-site') 
+                    ? '/car-parts-site/' 
+                    : '/';
+                
                 const galleryImages = [
-                    { src: 'store-front.png', alt: 'חנות הראשית' },
-                    { src: 'mirrors.png', alt: 'מראות משומשות' },
-                    { src: 'parts-display.png', alt: 'פנסים ומראות' },
-                    { src: 'car-parts.png', alt: 'חלקי רכב' },
-                    { src: 'headlights.png', alt: 'פנסים LED' }
+                    { src: baseUrl + 'store-front.png', alt: 'חנות הראשית' },
+                    { src: baseUrl + 'mirrors.png', alt: 'מראות משומשות' },
+                    { src: baseUrl + 'parts-display.png', alt: 'פנסים ומראות' },
+                    { src: baseUrl + 'car-parts.png', alt: 'חלקי רכב' },
+                    { src: baseUrl + 'headlights.png', alt: 'פנסים LED' }
                 ];
 
                 return `
@@ -748,7 +753,7 @@ service cloud.firestore {
                                 <div class="carousel-inner" id="carouselInner">
                                     ${galleryImages.map((img, idx) => `
                                         <div class="carousel-item">
-                                            <img src="${img.src}" alt="${img.alt}">
+                                            <img src="${img.src}" alt="${img.alt}" onerror="console.error('Failed to load: ${img.src}')" onload="console.log('Loaded: ${img.src}')">
                                         </div>
                                     `).join('')}
                                 </div>
