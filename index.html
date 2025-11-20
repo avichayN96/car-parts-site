@@ -918,16 +918,21 @@ service cloud.firestore {
                 }
 
                 try {
-                    // Add to reviews collection or create if doesn't exist
+                    // Create a standalone review document in requests collection
                     const reviewData = {
+                        isStandaloneReview: true,
                         name: name,
                         phone: phone,
                         rating: rating,
                         review: review,
-                        createdAt: new Date().toISOString()
+                        createdAt: new Date().toISOString(),
+                        carPart: 'חוות דעת כללית',
+                        carManufacturer: '-',
+                        carModel: '-',
+                        status: 'reviewed'
                     };
 
-                    db.collection('reviews').add(reviewData)
+                    db.collection('requests').add(reviewData)
                         .then(() => {
                             alert('תודה על חוות הדעת שלך! 🙏');
                             toggleReviewModal();
@@ -939,6 +944,7 @@ service cloud.firestore {
                             if (nameInput) nameInput.value = '';
                             if (phoneInput) phoneInput.value = '';
                             if (textInput) textInput.value = '';
+                            loadRequests();
                             render();
                         })
                         .catch(err => {
