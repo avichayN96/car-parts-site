@@ -1237,6 +1237,7 @@ service cloud.firestore {
             window.viewRequest = viewRequest;
             window.backToList = backToList;
             window.sendResponse = sendResponse;
+            window.deleteRequest = deleteRequest;
             async function submitRating(stars) {
                 const reviewText = document.getElementById('reviewText');
                 const review = reviewText ? reviewText.value.trim() : '';
