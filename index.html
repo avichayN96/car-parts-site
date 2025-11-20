@@ -786,10 +786,10 @@ service cloud.firestore {
             }
 
             function renderReviews() {
-                // Get all rated requests and sort by rating (highest first)
+                // Get all standalone reviews (not customer requests with ratings)
                 const ratedRequests = requests
-                    .filter(r => r.rating && r.rating > 0)
-                    .sort((a, b) => b.rating - a.rating);
+                    .filter(r => r.isStandaloneReview && r.rating && r.rating > 0)
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 
                 if (ratedRequests.length === 0) {
                     return '';
@@ -828,8 +828,6 @@ service cloud.firestore {
                                     <div class="border-t border-gray-200 pt-4 mt-4">
                                         <p class="font-bold text-gray-900 text-lg">${req.name}</p>
                                         <p class="text-sm text-gray-600">📞 ${req.phone}</p>
-                                        <p class="text-xs text-gray-500 mt-2">🔧 ${req.carPart}</p>
-                                        ${req.carManufacturer ? `<p class="text-xs text-gray-500">🚗 ${req.carManufacturer} ${req.carModel}</p>` : ''}
                                     </div>
                                 </div>
                             `).join('')}
@@ -1107,7 +1105,7 @@ service cloud.firestore {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${requests.map((req, idx) => {
+                                                ${requests.filter(r => !r.isStandaloneReview).map((req, idx) => {
                                                     const hasNewMessages = req.conversation && req.conversation.some(msg => msg.sender === 'customer' && !msg.read);
                                                     return `
                                                     <tr class="border-b hover:bg-blue-50 cursor-pointer transition-all ${hasNewMessages ? 'bg-blue-100' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}">
@@ -1147,17 +1145,17 @@ service cloud.firestore {
                                 <div class="flex justify-between items-center mb-6">
                                     <h2 class="text-3xl font-bold text-gray-800">⭐ ניהול חוות דעת</h2>
                                     <span class="bg-orange-100 text-orange-800 px-4 py-2 rounded-full font-bold">
-                                        סה"כ: ${(requests.filter(r => r.rating).length)}
+                                        סה"כ: ${(requests.filter(r => r.isStandaloneReview && r.rating).length)}
                                     </span>
                                 </div>
                                 
-                                ${requests.filter(r => r.rating).length === 0 ? `
+                                ${requests.filter(r => r.isStandaloneReview && r.rating).length === 0 ? `
                                     <div class="text-center py-12 text-gray-400">
                                         <p class="text-lg">אין חוות דעת עדיין</p>
                                     </div>
                                 ` : `
                                     <div class="space-y-4">
-                                        ${requests.filter(r => r.rating).map(req => `
+                                        ${requests.filter(r => r.isStandaloneReview && r.rating).map(req => `
                                             <div class="border-2 border-orange-200 rounded-xl p-4 flex justify-between items-start">
                                                 <div class="flex-1">
                                                     <div class="flex items-center gap-2 mb-2">
@@ -1166,7 +1164,6 @@ service cloud.firestore {
                                                         <span class="text-sm text-gray-600">${req.phone}</span>
                                                     </div>
                                                     ${req.review ? `<p class="text-gray-700 mb-2 italic">"${req.review}"</p>` : ''}
-                                                    <p class="text-xs text-gray-500">🔧 ${req.carPart} | 🚗 ${req.carManufacturer} ${req.carModel}</p>
                                                 </div>
                                                 <button onclick="deleteRequestRating('${req.id}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold transition ml-4">
                                                     🗑️ מחק
