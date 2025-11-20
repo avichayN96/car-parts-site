@@ -191,12 +191,9 @@
         .carousel-container {
             position: relative;
             width: 100%;
-            min-height: 400px;
+            height: 500px;
             background: #f3f4f6;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .carousel-inner {
@@ -209,7 +206,7 @@
         .carousel-item {
             flex: 0 0 100%;
             width: 100%;
-            min-height: 400px;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -217,9 +214,10 @@
         }
         
         .carousel-item img {
-            max-width: 90%;
-            max-height: 380px;
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
+            padding: 30px;
             display: block;
         }
         
@@ -760,8 +758,8 @@ service cloud.firestore {
                                     `).join('')}
                                 </div>
                                 
-                                <button class="carousel-button carousel-button-prev" onclick="carouselPrev()" title="תמונה קודמת">‹</button>
-                                <button class="carousel-button carousel-button-next" onclick="carouselNext()" title="תמונה הבאה">›</button>
+                                <button class="carousel-button carousel-button-prev" onclick="carouselNext()" title="תמונה הבאה">›</button>
+                                <button class="carousel-button carousel-button-next" onclick="carouselPrev()" title="תמונה קודמת">‹</button>
                             </div>
                             
                             <div class="carousel-controls">
