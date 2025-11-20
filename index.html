@@ -200,17 +200,25 @@
             display: flex;
             width: 100%;
             height: 100%;
-            transition: transform 0.5s ease-in-out;
+            position: relative;
         }
         
         .carousel-item {
             flex: 0 0 100%;
             width: 100%;
             height: 100%;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             background: #f3f4f6;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .carousel-item.active {
+            display: flex;
+            position: relative;
         }
         
         .carousel-item img {
@@ -589,7 +597,7 @@ service cloud.firestore {
                             ` : ''}
 
                             <div class="w-full mb-8">
-                                <img src="${window.location.pathname.includes('/car-parts-site') ? '/car-parts-site/' : '/'}header.png" alt="שרותי רכב פנסים ומראות" class="w-full h-auto object-contain">
+                                <img src="/car-parts-site/header.png?v=1" alt="שרותי רכב פנסים ומראות" class="w-full h-auto object-contain">
                             </div>
 
                             <div class="text-center text-white mb-8 py-12 fade-in">
@@ -729,16 +737,14 @@ service cloud.firestore {
 
             function renderGallery() {
                 // Get the base URL for GitHub Pages
-                const baseUrl = window.location.pathname.includes('/car-parts-site') 
-                    ? '/car-parts-site/' 
-                    : '/';
+                const baseUrl = '/car-parts-site/';
                 
                 const galleryImages = [
-                    { src: baseUrl + 'store-front.png', alt: 'חנות הראשית' },
-                    { src: baseUrl + 'mirrors.png', alt: 'מראות משומשות' },
-                    { src: baseUrl + 'parts-display.png', alt: 'פנסים ומראות' },
-                    { src: baseUrl + 'car-parts.png', alt: 'חלקי רכב' },
-                    { src: baseUrl + 'headlights.png', alt: 'פנסים LED' }
+                    { src: baseUrl + 'store-front.png?v=1', alt: 'חנות הראשית' },
+                    { src: baseUrl + 'mirrors.png?v=1', alt: 'מראות משומשות' },
+                    { src: baseUrl + 'parts-display.png?v=1', alt: 'פנסים ומראות' },
+                    { src: baseUrl + 'car-parts.png?v=1', alt: 'חלקי רכב' },
+                    { src: baseUrl + 'headlights.png?v=1', alt: 'פנסים LED' }
                 ];
 
                 return `
@@ -752,7 +758,7 @@ service cloud.firestore {
                             <div class="carousel-container">
                                 <div class="carousel-inner" id="carouselInner">
                                     ${galleryImages.map((img, idx) => `
-                                        <div class="carousel-item">
+                                        <div class="carousel-item ${idx === 0 ? 'active' : ''}">
                                             <img src="${img.src}" alt="${img.alt}" onerror="console.error('Failed to load: ${img.src}')" onload="console.log('Loaded: ${img.src}')">
                                         </div>
                                     `).join('')}
@@ -1404,28 +1410,36 @@ service cloud.firestore {
             // Carousel functionality
             let currentCarouselIndex = 0;
             const totalCarouselItems = 5;
+            let carouselInterval;
 
             function carouselGoTo(index) {
                 currentCarouselIndex = index;
                 updateCarousel();
+                resetCarouselTimer();
             }
 
             function carouselNext() {
                 currentCarouselIndex = (currentCarouselIndex + 1) % totalCarouselItems;
                 updateCarousel();
+                resetCarouselTimer();
             }
 
             function carouselPrev() {
                 currentCarouselIndex = (currentCarouselIndex - 1 + totalCarouselItems) % totalCarouselItems;
                 updateCarousel();
+                resetCarouselTimer();
             }
 
             function updateCarousel() {
-                const carouselInner = document.getElementById('carouselInner');
-                if (carouselInner) {
-                    const offset = -currentCarouselIndex * 100;
-                    carouselInner.style.transform = `translateX(${offset}%)`;
-                }
+                // Hide all items
+                const allItems = document.querySelectorAll('.carousel-item');
+                allItems.forEach((item, idx) => {
+                    if (idx === currentCarouselIndex) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
                 
                 // Update dots
                 const dots = document.querySelectorAll('.carousel-dot');
@@ -1442,7 +1456,26 @@ service cloud.firestore {
                 if (counter) {
                     counter.textContent = currentCarouselIndex + 1;
                 }
+                
+                console.log('Showing image:', currentCarouselIndex + 1, 'of 5');
             }
+
+            function startCarouselTimer() {
+                resetCarouselTimer();
+            }
+
+            function resetCarouselTimer() {
+                clearInterval(carouselInterval);
+                carouselInterval = setInterval(() => {
+                    currentCarouselIndex = (currentCarouselIndex + 1) % totalCarouselItems;
+                    updateCarousel();
+                }, 5000); // Change image every 5 seconds
+            }
+
+            // Start carousel timer when page loads
+            setTimeout(() => {
+                startCarouselTimer();
+            }, 1000);
 
             // Make functions global
             window.carouselNext = carouselNext;
