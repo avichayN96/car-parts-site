@@ -179,6 +179,90 @@
             overflow: hidden;
         }
         
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            border-radius: 2rem;
+        }
+        
+        .carousel-inner {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+        
+        .carousel-item {
+            min-width: 100%;
+            flex-shrink: 0;
+        }
+        
+        .carousel-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+        
+        .carousel-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 107, 53, 0.8);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .carousel-button:hover {
+            background: rgba(255, 107, 53, 1);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .carousel-button-prev {
+            left: 20px;
+        }
+        
+        .carousel-button-next {
+            right: 20px;
+        }
+        
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            padding: 0 20px;
+        }
+        
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #d1d5db;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .carousel-dot.active {
+            background: #ff6b35;
+            width: 32px;
+            border-radius: 6px;
+        }
+        
+        .carousel-dot:hover {
+            background: #ff6b35;
+        }
+        
+        
         select {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ff6b35'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
             background-repeat: no-repeat;
@@ -469,7 +553,7 @@ service cloud.firestore {
                             ` : ''}
 
                             <div class="w-full mb-8">
-                                <img src="1763632102056_image.png" alt="שרותי רכב פנסים ומראות" class="w-full h-auto object-contain">
+                                <img src="header.png" alt="שרותי רכב פנסים ומראות" class="w-full h-auto object-contain">
                             </div>
 
                             <div class="text-center text-white mb-8 py-12 fade-in">
@@ -517,6 +601,7 @@ service cloud.firestore {
                             ${showSuccess ? renderSuccessMessage() : ''}
                             ${!showStatusCheck && !showSuccess ? renderForm() : ''}
                             ${!showStatusCheck ? renderTrustIndicators() : ''}
+                            ${!showStatusCheck ? renderGallery() : ''}
                             ${!showStatusCheck ? renderReviews() : ''}
                             ${renderFooter()}
                         </div>
@@ -603,6 +688,46 @@ service cloud.firestore {
                     <input type="text" id="name" class="input-field w-full p-5 border-2 rounded-2xl text-right focus:outline-none text-lg" placeholder="שם מלא *" required />
                     <input type="tel" id="phone" class="input-field w-full p-5 border-2 rounded-2xl text-right focus:outline-none text-lg" placeholder="טלפון *" required />
                     <input type="email" id="email" class="input-field w-full p-5 border-2 rounded-2xl text-right focus:outline-none text-lg" placeholder="אימייל (אופציונלי)" />
+                `;
+            }
+
+            function renderGallery() {
+                const galleryImages = [
+                    { src: 'store-front.png', alt: 'חנות הראשית' },
+                    { src: 'mirrors.png', alt: 'מראות משומשות' },
+                    { src: 'parts-display.png', alt: 'פנסים ומראות' },
+                    { src: 'car-parts.png', alt: 'חלקי רכב' },
+                    { src: 'headlights.png', alt: 'פנסים LED' }
+                ];
+
+                return `
+                    <div class="mt-16 mb-8 fade-in">
+                        <div class="text-center mb-12">
+                            <h2 class="text-4xl font-bold text-gray-800 mb-2">📸 גלריית המוצרים שלנו</h2>
+                            <p class="text-gray-600 text-lg">כל מה שיש לנו בחנות</p>
+                        </div>
+
+                        <div class="glass-card rounded-3xl overflow-hidden shadow-2xl">
+                            <div class="carousel-container">
+                                <div class="carousel-inner" id="carouselInner">
+                                    ${galleryImages.map((img, idx) => `
+                                        <div class="carousel-item" data-index="${idx}">
+                                            <img src="${img.src}" alt="${img.alt}" class="w-full">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <button class="carousel-button carousel-button-prev" onclick="carouselPrev()">❮</button>
+                                <button class="carousel-button carousel-button-next" onclick="carouselNext()">❯</button>
+                            </div>
+                            
+                            <div class="carousel-dots">
+                                ${galleryImages.map((_, idx) => `
+                                    <div class="carousel-dot ${idx === 0 ? 'active' : ''}" onclick="carouselGoTo(${idx})" data-index="${idx}"></div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
                 `;
             }
 
@@ -1229,6 +1354,48 @@ service cloud.firestore {
                     alert('שגיאה בשליחת ההודעה: ' + error.message);
                 }
             }
+
+            // Carousel functionality
+            let currentCarouselIndex = 0;
+            const totalCarouselItems = 5;
+
+            function carouselGoTo(index) {
+                currentCarouselIndex = index;
+                updateCarousel();
+            }
+
+            function carouselNext() {
+                currentCarouselIndex = (currentCarouselIndex + 1) % totalCarouselItems;
+                updateCarousel();
+            }
+
+            function carouselPrev() {
+                currentCarouselIndex = (currentCarouselIndex - 1 + totalCarouselItems) % totalCarouselItems;
+                updateCarousel();
+            }
+
+            function updateCarousel() {
+                const carouselInner = document.getElementById('carouselInner');
+                if (carouselInner) {
+                    const offset = -currentCarouselIndex * 100;
+                    carouselInner.style.transform = `translateX(${offset}%)`;
+                }
+                
+                // Update dots
+                const dots = document.querySelectorAll('.carousel-dot');
+                dots.forEach((dot, idx) => {
+                    if (idx === currentCarouselIndex) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+
+            // Make functions global
+            window.carouselNext = carouselNext;
+            window.carouselPrev = carouselPrev;
+            window.carouselGoTo = carouselGoTo;
 
             // Make functions global
             window.toggleStatusCheck = toggleStatusCheck;
