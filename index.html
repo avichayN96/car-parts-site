@@ -179,87 +179,120 @@
             overflow: hidden;
         }
         
+        .carousel-wrapper {
+            width: 100%;
+            background: white;
+            border-radius: 2rem;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        
         .carousel-container {
             position: relative;
             width: 100%;
+            height: 400px;
             overflow: hidden;
-            border-radius: 2rem;
+            background: #f3f4f6;
         }
         
         .carousel-inner {
             display: flex;
+            height: 100%;
             transition: transform 0.5s ease-in-out;
         }
         
         .carousel-item {
             min-width: 100%;
             flex-shrink: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f4f6;
         }
         
         .carousel-item img {
-            width: 100%;
-            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
             display: block;
-            object-fit: contain;
         }
         
         .carousel-button {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 107, 53, 0.8);
+            background: rgba(255, 107, 53, 0.9);
             color: white;
             border: none;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
             z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         
         .carousel-button:hover {
             background: rgba(255, 107, 53, 1);
-            transform: translateY(-50%) scale(1.1);
+            transform: translateY(-50%) scale(1.15);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
         
         .carousel-button-prev {
-            left: 20px;
+            left: 15px;
         }
         
         .carousel-button-next {
-            right: 20px;
+            right: 15px;
+        }
+        
+        .carousel-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 25px;
+            background: white;
         }
         
         .carousel-dots {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            margin-top: 20px;
-            padding: 0 20px;
+            gap: 8px;
         }
         
         .carousel-dot {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             background: #d1d5db;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-        
-        .carousel-dot.active {
-            background: #ff6b35;
-            width: 32px;
-            border-radius: 6px;
+            border: 2px solid transparent;
         }
         
         .carousel-dot:hover {
             background: #ff6b35;
+            transform: scale(1.2);
+        }
+        
+        .carousel-dot.active {
+            background: #ff6b35;
+            box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.2);
+        }
+        
+        .carousel-counter {
+            font-weight: bold;
+            color: #ff6b35;
+            min-width: 50px;
+            text-align: center;
+            font-size: 14px;
         }
         
         
@@ -707,24 +740,29 @@ service cloud.firestore {
                             <p class="text-gray-600 text-lg">כל מה שיש לנו בחנות</p>
                         </div>
 
-                        <div class="glass-card rounded-3xl overflow-hidden shadow-2xl">
+                        <div class="carousel-wrapper">
                             <div class="carousel-container">
                                 <div class="carousel-inner" id="carouselInner">
                                     ${galleryImages.map((img, idx) => `
                                         <div class="carousel-item" data-index="${idx}">
-                                            <img src="${img.src}" alt="${img.alt}" class="w-full">
+                                            <img src="${img.src}" alt="${img.alt}">
                                         </div>
                                     `).join('')}
                                 </div>
                                 
-                                <button class="carousel-button carousel-button-prev" onclick="carouselPrev()">❮</button>
-                                <button class="carousel-button carousel-button-next" onclick="carouselNext()">❯</button>
+                                <button class="carousel-button carousel-button-prev" onclick="carouselPrev()" title="תמונה קודמת">‹</button>
+                                <button class="carousel-button carousel-button-next" onclick="carouselNext()" title="תמונה הבאה">›</button>
                             </div>
                             
-                            <div class="carousel-dots">
-                                ${galleryImages.map((_, idx) => `
-                                    <div class="carousel-dot ${idx === 0 ? 'active' : ''}" onclick="carouselGoTo(${idx})" data-index="${idx}"></div>
-                                `).join('')}
+                            <div class="carousel-controls">
+                                <div class="carousel-dots">
+                                    ${galleryImages.map((_, idx) => `
+                                        <div class="carousel-dot ${idx === 0 ? 'active' : ''}" onclick="carouselGoTo(${idx})" data-index="${idx}"></div>
+                                    `).join('')}
+                                </div>
+                                <div class="carousel-counter">
+                                    <span id="carouselCounter">1</span> / ${galleryImages.length}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1390,6 +1428,12 @@ service cloud.firestore {
                         dot.classList.remove('active');
                     }
                 });
+                
+                // Update counter
+                const counter = document.getElementById('carouselCounter');
+                if (counter) {
+                    counter.textContent = currentCarouselIndex + 1;
+                }
             }
 
             // Make functions global
