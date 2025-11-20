@@ -185,19 +185,25 @@
             border-radius: 2rem;
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            margin: 0 auto;
+            max-width: 100%;
         }
         
         .carousel-container {
             position: relative;
             width: 100%;
-            height: 400px;
+            height: 450px;
             overflow: hidden;
             background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .carousel-inner {
             display: flex;
             height: 100%;
+            width: 100%;
             transition: transform 0.5s ease-in-out;
         }
         
@@ -209,13 +215,17 @@
             align-items: center;
             justify-content: center;
             background: #f3f4f6;
+            padding: 20px;
         }
         
         .carousel-item img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: cover;
+            max-width: 95%;
+            max-height: 95%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
             display: block;
+            border-radius: 1rem;
         }
         
         .carousel-button {
@@ -734,7 +744,7 @@ service cloud.firestore {
                 ];
 
                 return `
-                    <div class="mt-16 mb-8 fade-in">
+                    <div class="mt-16 mb-8 fade-in w-full">
                         <div class="text-center mb-12">
                             <h2 class="text-4xl font-bold text-gray-800 mb-2">📸 גלריית המוצרים שלנו</h2>
                             <p class="text-gray-600 text-lg">כל מה שיש לנו בחנות</p>
