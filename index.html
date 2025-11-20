@@ -22,9 +22,7 @@
         }
         
         .gradient-bg {
-            background: linear-gradient(135deg, #c31432 0%, #f15a24 35%, #ff6b35 65%, #ff8c42 100%);
-            animation: gradientShift 8s ease infinite;
-            background-size: 200% 200%;
+            background: white;
         }
         
         @keyframes gradientShift {
@@ -600,34 +598,34 @@ service cloud.firestore {
                                 <img src="/car-parts-site/header.png?v=1" alt="שרותי רכב פנסים ומראות" class="w-full h-auto object-contain">
                             </div>
 
-                            <div class="text-center text-white mb-8 py-12 fade-in">
+                            <div class="text-center text-gray-800 mb-8 py-12 fade-in">
                                 <h1 class="text-5xl font-bold mb-3 leading-tight">חלקי חילוף משומשים</h1>
                                 <h2 class="text-4xl font-bold mb-6 leading-tight">באיכות מעולה 🏆</h2>
-                                <p class="text-xl text-white/95 mb-4 max-w-xl mx-auto leading-relaxed">
+                                <p class="text-xl text-gray-700 mb-4 max-w-xl mx-auto leading-relaxed">
                                     מתמחים באיתור ואספקה של חלקי רכב משומשים מכל הסוגים
                                 </p>
-                                <p class="text-lg text-white/90 font-medium mb-2">במקום מחלקת פחחות וצבע</p>
-                                <p class="text-lg text-white/90 font-medium">פנסים • מראות • גרילים • פגושים • ועוד</p>
+                                <p class="text-lg text-gray-700 font-medium mb-2">במקום מחלקת פחחות וצבע</p>
+                                <p class="text-lg text-gray-700 font-medium">פנסים • מראות • גרילים • פגושים • ועוד</p>
                                 
                                 <div class="flex flex-wrap justify-center gap-6 mt-8 text-sm font-medium">
                                     <div class="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-5 py-3 rounded-full">
                                         <div class="w-6 h-6 bg-white text-orange-500 rounded-full flex items-center justify-center font-bold">✓</div>
-                                        <span class="text-white font-semibold">מלאי ענק</span>
+                                        <span class="text-gray-800 font-semibold">מלאי ענק</span>
                                     </div>
                                     <div class="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-5 py-3 rounded-full">
                                         <div class="w-6 h-6 bg-white text-orange-500 rounded-full flex items-center justify-center font-bold">✓</div>
-                                        <span class="text-white font-semibold">מחירים הוגנים</span>
+                                        <span class="text-gray-800 font-semibold">מחירים הוגנים</span>
                                     </div>
                                     <div class="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-5 py-3 rounded-full">
                                         <div class="w-6 h-6 bg-white text-orange-500 rounded-full flex items-center justify-center font-bold">✓</div>
-                                        <span class="text-white font-semibold">שירות מהיר</span>
+                                        <span class="text-gray-800 font-semibold">שירות מהיר</span>
                                     </div>
                                 </div>
 
                                 <div class="mt-8 space-y-3">
                                     <button
                                         onclick="toggleStatusCheck()"
-                                        class="bg-white/20 backdrop-blur-sm text-white px-8 py-4 rounded-2xl hover:bg-white/30 transition-all font-bold border-2 border-white/40 inline-flex items-center gap-3 shadow-lg"
+                                        class="bg-white/20 backdrop-blur-sm text-gray-800 px-8 py-4 rounded-2xl hover:bg-white/30 transition-all font-bold border-2 border-gray-400 inline-flex items-center gap-3 shadow-lg"
                                     >
                                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
@@ -635,9 +633,9 @@ service cloud.firestore {
                                         בדוק סטטוס בקשה
                                     </button>
                                     
-                                    <div class="text-white/80 text-sm">
+                                    <div class="text-gray-700 text-sm">
                                         <p>📍 משה בקר 31, ראשון לציון</p>
-                                        <a href="tel:0546251605" class="inline-block mt-2 hover:text-white transition">📞 054-6251605</a>
+                                        <a href="tel:0546251605" class="inline-block mt-2 hover:text-gray-900 transition">📞 054-6251605</a>
                                     </div>
                                 </div>
                             </div>
@@ -861,11 +859,11 @@ service cloud.firestore {
 
             function renderFooter() {
                 return `
-                    <div class="text-center text-white text-sm mt-12 pb-8">
+                    <div class="text-center text-gray-800 text-sm mt-12 pb-8">
                         <p class="font-bold text-lg mb-2">שרותי רכב פנסים ומראות</p>
                         <p class="mb-1">רחוב משה בקר 31, ראשון לציון</p>
                         <a href="tel:0546251605" class="hover:underline">📞 054-6251605</a>
-                        <p class="mt-4 text-white/70 text-xs">© 2024 כל הזכויות שמורות</p>
+                        <p class="mt-4 text-gray-600 text-xs">© 2024 כל הזכויות שמורות</p>
                     </div>
                 `;
             }
