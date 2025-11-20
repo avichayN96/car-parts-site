@@ -631,12 +631,41 @@ service cloud.firestore {
             }
 
             function renderStatusCheck() {
-                // Similar to previous version but simplified
-                return `<div class="glass-card rounded-3xl p-8 mb-8">
-                    <h2 class="text-2xl font-bold mb-4">בדוק סטטוס בקשה</h2>
-                    <input type="tel" id="statusPhone" class="w-full p-4 border-2 rounded-xl mb-4" placeholder="הזן טלפון" />
-                    <button onclick="checkStatus()" class="btn-primary w-full py-3 rounded-xl text-white font-bold">חפש</button>
-                    ${statusResult ? '<div class="mt-4 p-4 bg-blue-50 rounded-xl">נמצאה בקשה!</div>' : ''}
+                return `<div class="glass-card rounded-3xl p-8 mb-8 fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">בדוק סטטוס בקשה</h2>
+                        <button onclick="toggleStatusCheck()" class="text-gray-500 hover:text-gray-700 text-3xl">✕</button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <input 
+                            type="text" 
+                            id="statusPhone" 
+                            class="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition text-right" 
+                            placeholder="הזן מספר טלפון או שם..." 
+                        />
+                        <button onclick="checkStatus()" class="btn-primary w-full py-3 rounded-xl text-white font-bold">🔍 חפש בקשה</button>
+                    </div>
+                    
+                    ${statusResult ? `
+                        <div class="mt-6 p-6 bg-green-50 border-2 border-green-300 rounded-xl">
+                            <h3 class="text-xl font-bold text-green-800 mb-4">✓ נמצאה בקשה!</h3>
+                            <div class="space-y-3 text-right">
+                                <p><span class="font-bold">👤 שם:</span> ${statusResult.name}</p>
+                                <p><span class="font-bold">📞 טלפון:</span> ${statusResult.phone}</p>
+                                <p><span class="font-bold">🔧 חלק:</span> ${statusResult.carPart}</p>
+                                <p><span class="font-bold">🚗 רכב:</span> ${statusResult.carManufacturer} ${statusResult.carModel}</p>
+                                <p><span class="font-bold">📅 תאריך:</span> ${new Date(statusResult.createdAt).toLocaleString('he-IL')}</p>
+                                <p>
+                                    <span class="font-bold">סטטוס:</span> 
+                                    <span class="inline-block px-3 py-1 rounded-full font-bold ${statusResult.status === 'answered' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">
+                                        ${statusResult.status === 'answered' ? '✓ נענתה' : '⏳ ממתינה'}
+                                    </span>
+                                </p>
+                                ${statusResult.response ? `<p class="mt-3 p-3 bg-white rounded-lg"><span class="font-bold">תשובה:</span> ${statusResult.response}</p>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>`;
             }
 
@@ -746,19 +775,26 @@ service cloud.firestore {
             function renderSingleRequest() {
                 return `<div class="min-h-screen p-4 bg-gray-50">
                     <div class="max-w-4xl mx-auto">
-                        <div class="bg-white rounded-2xl p-6 mb-4">
-                            <button onclick="backToList()" class="text-blue-600 font-bold">← חזרה</button>
+                        <div class="bg-white rounded-2xl p-6 mb-4 flex justify-between items-center">
+                            <button onclick="backToList()" class="text-blue-600 font-bold text-lg">← חזרה</button>
+                            <button onclick="deleteRequest('${selectedRequest.id}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-bold transition">🗑️ מחוק בקשה</button>
                         </div>
                         <div class="bg-white rounded-2xl p-8">
-                            <h2 class="text-3xl font-bold mb-4">${selectedRequest.name}</h2>
-                            <p>📞 ${selectedRequest.phone}</p>
-                            <p>🔧 ${selectedRequest.carPart}</p>
-                            <p>🚗 ${selectedRequest.carManufacturer} ${selectedRequest.carModel}</p>
-                            ${selectedRequest.description ? `<p class="mt-4 p-4 bg-gray-50 rounded-lg">${selectedRequest.description}</p>` : ''}
+                            <div class="mb-6 pb-6 border-b-2">
+                                <h2 class="text-3xl font-bold mb-4">${selectedRequest.name}</h2>
+                                <div class="grid grid-cols-2 gap-4 text-right">
+                                    <p class="text-lg"><span class="font-bold">📞 טלפון:</span> ${selectedRequest.phone}</p>
+                                    <p class="text-lg"><span class="font-bold">🔧 חלק:</span> ${selectedRequest.carPart}</p>
+                                    <p class="text-lg"><span class="font-bold">🚗 רכב:</span> ${selectedRequest.carManufacturer} ${selectedRequest.carModel}</p>
+                                    <p class="text-lg"><span class="font-bold">📅 תאריך:</span> ${new Date(selectedRequest.createdAt).toLocaleString('he-IL')}</p>
+                                </div>
+                                ${selectedRequest.description ? `<p class="mt-4 p-4 bg-gray-50 rounded-lg text-right"><span class="font-bold">תיאור:</span> ${selectedRequest.description}</p>` : ''}
+                            </div>
                             
                             <div class="mt-6">
-                                <textarea id="responseText" class="w-full p-4 border-2 rounded-xl" rows="4" placeholder="כתוב תשובה..."></textarea>
-                                <button onclick="sendResponse()" class="mt-3 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">שלח תשובה</button>
+                                <label class="block text-xl font-bold mb-3">כתוב תשובה:</label>
+                                <textarea id="responseText" class="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition" rows="4" placeholder="כתוב תשובה ללקוח..."></textarea>
+                                <button onclick="sendResponse()" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition">📤 שלח תשובה</button>
                             </div>
                         </div>
                     </div>
@@ -781,6 +817,19 @@ service cloud.firestore {
                         });
                     }
                 });
+
+                // Add listener for status phone input
+                const statusPhoneInput = document.getElementById('statusPhone');
+                if (statusPhoneInput) {
+                    statusPhoneInput.addEventListener('input', (e) => {
+                        statusPhone = e.target.value;
+                    });
+                    statusPhoneInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            checkStatus();
+                        }
+                    });
+                }
             }
 
             async function handleSubmit(e) {
@@ -832,9 +881,37 @@ service cloud.firestore {
             }
 
             function checkStatus() {
-                // Simplified for now
-                statusResult = requests.find(r => r.phone === statusPhone);
+                if (!statusPhone.trim()) {
+                    alert('נא להזין מספר טלפון או שם');
+                    statusResult = null;
+                    return;
+                }
+                
+                // חיפוש לפי טלפון או שם
+                statusResult = requests.find(r => 
+                    r.phone.includes(statusPhone.trim()) || 
+                    r.name.includes(statusPhone.trim())
+                );
+                
+                if (!statusResult) {
+                    alert('לא נמצאה בקשה עם המידע הזה');
+                }
                 render();
+            }
+
+            async function deleteRequest(id) {
+                if (!confirm('האם אתה בטוח שברצונך למחוק בקשה זו?')) {
+                    return;
+                }
+
+                try {
+                    await db.collection('requests').doc(id).delete();
+                    alert('הבקשה נמחקה בהצלחה ✓');
+                    backToList();
+                } catch (error) {
+                    console.error('Error deleting request:', error);
+                    alert('שגיאה במחיקת הבקשה: ' + error.message);
+                }
             }
 
             function viewRequest(id) {
@@ -865,20 +942,31 @@ service cloud.firestore {
 
             async function sendResponse() {
                 const textarea = document.getElementById('responseText');
-                const response = textarea ? textarea.value : responseText;
+                const response = textarea ? textarea.value.trim() : (responseText ? responseText.trim() : '');
                 
-                if (!response.trim()) {
+                if (!response) {
                     alert('נא לכתוב תשובה');
                     return;
                 }
 
                 try {
+                    if (!selectedRequest || !selectedRequest.id) {
+                        alert('שגיאה: לא נבחרה בקשה');
+                        return;
+                    }
+
                     if (!selectedRequest.response) {
                         // First response
                         await db.collection('requests').doc(selectedRequest.id).update({
                             response: response,
                             status: 'answered',
-                            answeredAt: new Date().toISOString()
+                            answeredAt: new Date().toISOString(),
+                            conversation: [{
+                                sender: 'ofer',
+                                message: response,
+                                timestamp: new Date().toISOString(),
+                                read: true
+                            }]
                         });
                     } else {
                         // Additional message
@@ -886,7 +974,8 @@ service cloud.firestore {
                         conversation.push({
                             sender: 'ofer',
                             message: response,
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
+                            read: true
                         });
                         
                         await db.collection('requests').doc(selectedRequest.id).update({
@@ -895,11 +984,16 @@ service cloud.firestore {
                     }
 
                     responseText = '';
+                    if (textarea) textarea.value = '';
                     alert('ההודעה נשלחה! 🎉');
+                    
+                    // Reload the request to show updated data
+                    const updatedRequest = await db.collection('requests').doc(selectedRequest.id).get();
+                    selectedRequest = { id: updatedRequest.id, ...updatedRequest.data() };
                     render();
                 } catch (error) {
                     console.error('Error sending response:', error);
-                    alert('שגיאה בשליחת ההודעה');
+                    alert('שגיאה בשליחת ההודעה: ' + error.message);
                 }
             }
 
@@ -909,6 +1003,7 @@ service cloud.firestore {
             window.viewRequest = viewRequest;
             window.backToList = backToList;
             window.sendResponse = sendResponse;
+            window.deleteRequest = deleteRequest;
         }
     </script>
 </body>
