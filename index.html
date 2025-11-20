@@ -448,6 +448,11 @@ service cloud.firestore {
             // but I'll include a complete working version
 
             function renderCustomerView() {
+                // If viewing a request, show the chat
+                if (selectedRequest) {
+                    return renderSingleRequest();
+                }
+
                 calculateProgress();
                 
                 return `
