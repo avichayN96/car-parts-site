@@ -182,9 +182,9 @@
         select {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ff6b35'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 1rem center;
+            background-position: left 1rem center;
             background-size: 1.5em 1.5em;
-            padding-right: 3rem;
+            padding-left: 3rem;
         }
         
         .chat-bubble {
@@ -1109,8 +1109,12 @@ service cloud.firestore {
                     // הסר מהמערך המקומי
                     requests = requests.filter(r => r.id !== id);
                     
+                    // בטל את selectedRequest ועדכן את התצוגה
+                    selectedRequest = null;
+                    responseText = '';
+                    
                     alert('הבקשה נמחקה בהצלחה ✓');
-                    backToList();
+                    render();
                 } catch (error) {
                     console.error('Error deleting request:', error);
                     alert('שגיאה במחיקת הבקשה: ' + error.message);
