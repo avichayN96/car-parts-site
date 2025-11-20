@@ -606,7 +606,8 @@ service cloud.firestore {
                                 <p class="text-xl text-white/95 mb-4 max-w-xl mx-auto leading-relaxed">
                                     מתמחים באיתור ואספקה של חלקי רכב משומשים מכל הסוגים
                                 </p>
-                                <p class="text-lg text-white/90 font-medium">פנסים • מראות • גרילים • דלתות • ועוד</p>
+                                <p class="text-lg text-white/90 font-medium mb-2">במקום מחלקת פחחות וצבע</p>
+                                <p class="text-lg text-white/90 font-medium">פנסים • מראות • גרילים • פגושים • ועוד</p>
                                 
                                 <div class="flex flex-wrap justify-center gap-6 mt-8 text-sm font-medium">
                                     <div class="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-5 py-3 rounded-full">
@@ -636,7 +637,7 @@ service cloud.firestore {
                                     
                                     <div class="text-white/80 text-sm">
                                         <p>📍 משה בקר 31, ראשון לציון</p>
-                                        <a href="tel:0501234567" class="inline-block mt-2 hover:text-white transition">📞 050-123-4567</a>
+                                        <a href="tel:0546251605" class="inline-block mt-2 hover:text-white transition">📞 054-6251605</a>
                                     </div>
                                 </div>
                             </div>
@@ -711,7 +712,7 @@ service cloud.firestore {
                         <option value="גריל קדמי">גריל קדמי</option>
                         <option value="פגוש קדמי">פגוש קדמי</option>
                         <option value="פגוש אחורי">פגוש אחורי</option>
-                        <option value="דלת">דלת</option>
+                        <option value="פחחות וצבע">פחחות וצבע</option>
                         <option value="מכסה מנוע">מכסה מנוע</option>
                         <option value="מכסה תא מטען">מכסה תא מטען</option>
                         <option value="פנדר">פנדר</option>
@@ -863,7 +864,7 @@ service cloud.firestore {
                     <div class="text-center text-white text-sm mt-12 pb-8">
                         <p class="font-bold text-lg mb-2">שרותי רכב פנסים ומראות</p>
                         <p class="mb-1">רחוב משה בקר 31, ראשון לציון</p>
-                        <a href="tel:0501234567" class="hover:underline">📞 050-123-4567</a>
+                        <a href="tel:0546251605" class="hover:underline">📞 054-6251605</a>
                         <p class="mt-4 text-white/70 text-xs">© 2024 כל הזכויות שמורות</p>
                     </div>
                 `;
@@ -1105,31 +1106,31 @@ service cloud.firestore {
                     <!-- Input Area -->
                     <div class="bg-white border-t-2 border-gray-200 p-4 sticky bottom-0">
                         <div class="max-w-4xl mx-auto">
-                            ${!isAdmin && selectedRequest.status === 'answered' && !selectedRequest.rating ? `
-                                <div class="mb-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
-                                    <p class="text-sm font-bold text-gray-800 mb-3">⭐ האם אתה מרוצה מהשירות?</p>
-                                    <div class="flex justify-center gap-2 mb-3">
-                                        <button onclick="submitRating(1)" class="text-3xl hover:scale-125 transition">😞</button>
-                                        <button onclick="submitRating(2)" class="text-3xl hover:scale-125 transition">😕</button>
-                                        <button onclick="submitRating(3)" class="text-3xl hover:scale-125 transition">😐</button>
-                                        <button onclick="submitRating(4)" class="text-3xl hover:scale-125 transition">😊</button>
-                                        <button onclick="submitRating(5)" class="text-3xl hover:scale-125 transition">😍</button>
+                            ${!isAdmin && selectedRequest.status === 'answered' ? `
+                                ${!selectedRequest.rating ? `
+                                    <div class="mb-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
+                                        <p class="text-sm font-bold text-gray-800 mb-3">⭐ האם אתה מרוצה מהשירות?</p>
+                                        <div class="flex justify-center gap-2 mb-3">
+                                            <button onclick="submitRating(1)" class="text-3xl hover:scale-125 transition">😞</button>
+                                            <button onclick="submitRating(2)" class="text-3xl hover:scale-125 transition">😕</button>
+                                            <button onclick="submitRating(3)" class="text-3xl hover:scale-125 transition">😐</button>
+                                            <button onclick="submitRating(4)" class="text-3xl hover:scale-125 transition">😊</button>
+                                            <button onclick="submitRating(5)" class="text-3xl hover:scale-125 transition">😍</button>
+                                        </div>
+                                        <textarea 
+                                            id="reviewText" 
+                                            class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm text-right" 
+                                            rows="2"
+                                            placeholder="כתוב חוות דעת (לא חובה)..."
+                                        ></textarea>
                                     </div>
-                                    <textarea 
-                                        id="reviewText" 
-                                        class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm text-right" 
-                                        rows="2"
-                                        placeholder="כתוב חוות דעת (לא חובה)..."
-                                    ></textarea>
-                                </div>
-                            ` : ''}
-
-                            ${selectedRequest.rating ? `
-                                <div class="mb-4 p-4 bg-green-50 rounded-2xl border-2 border-green-200">
-                                    <p class="text-sm font-bold text-gray-800">✓ תודה על הדירוג שלך!</p>
-                                    <p class="text-lg mt-2">${'⭐'.repeat(selectedRequest.rating)}</p>
-                                    ${selectedRequest.review ? `<p class="text-sm text-gray-700 mt-2">💬 "${selectedRequest.review}"</p>` : ''}
-                                </div>
+                                ` : `
+                                    <div class="mb-4 p-4 bg-green-50 rounded-2xl border-2 border-green-200">
+                                        <p class="text-sm font-bold text-gray-800">✓ תודה על הדירוג שלך!</p>
+                                        <p class="text-lg mt-2">${'⭐'.repeat(selectedRequest.rating)}</p>
+                                        ${selectedRequest.review ? `<p class="text-sm text-gray-700 mt-2">💬 "${selectedRequest.review}"</p>` : ''}
+                                    </div>
+                                `}
                             ` : ''}
 
                             <div class="flex gap-3">
@@ -1378,10 +1379,8 @@ service cloud.firestore {
                         updateObj.answeredAt = new Date().toISOString();
                     }
                     
-                    // If customer sends a new message after answered - change back to pending
-                    if (sender === 'customer' && selectedRequest.status === 'answered') {
-                        updateObj.status = 'pending';
-                    }
+                    // Customer messages don't change status back to pending - stays answered
+                    // Only ofer can set the status to answered
 
                     // Update Firebase
                     await db.collection('requests').doc(selectedRequest.id).update(updateObj);
