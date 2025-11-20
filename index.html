@@ -918,21 +918,35 @@ service cloud.firestore {
                 }
 
                 try {
-                    db.collection('reviews').add({
+                    // Add to reviews collection or create if doesn't exist
+                    const reviewData = {
                         name: name,
                         phone: phone,
                         rating: rating,
                         review: review,
                         createdAt: new Date().toISOString()
-                    }).then(() => {
-                        alert('תודה על חוות הדעת שלך! 🙏');
-                        toggleReviewModal();
-                        window.selectedReviewRating = 0;
-                        render();
-                    }).catch(err => {
-                        alert('שגיאה בשליחת חוות הדעת: ' + err.message);
-                    });
+                    };
+
+                    db.collection('reviews').add(reviewData)
+                        .then(() => {
+                            alert('תודה על חוות הדעת שלך! 🙏');
+                            toggleReviewModal();
+                            window.selectedReviewRating = 0;
+                            // Clear inputs
+                            const nameInput = document.getElementById('modalReviewName');
+                            const phoneInput = document.getElementById('modalReviewPhone');
+                            const textInput = document.getElementById('modalReviewText');
+                            if (nameInput) nameInput.value = '';
+                            if (phoneInput) phoneInput.value = '';
+                            if (textInput) textInput.value = '';
+                            render();
+                        })
+                        .catch(err => {
+                            console.error('Error adding review:', err);
+                            alert('שגיאה בשליחת חוות הדעת: ' + err.message);
+                        });
                 } catch (error) {
+                    console.error('Error in submitReview:', error);
                     alert('שגיאה: ' + error.message);
                 }
             }
